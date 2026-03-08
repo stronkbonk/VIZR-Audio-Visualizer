@@ -1,0 +1,214 @@
+Requirements:
+-------------------------------------------------------------------------
+SFML 2.6  — https://github.com/SFML/SFML/releases/tag/2.6.1
+Handles: window, rendering, audio playback
+Supports: WAV, OGG out of the box. MP3 needs a plugin.
+
+Dear ImGui — https://github.com/ocornut/imgui
+The UI panels, buttons, sliders.
+
+imgui-sfml — https://github.com/SFML/imgui-sfml
+Connects Dear ImGui to SFML's render window.
+A C++ compiler:
+   Windows : MinGW-w64 or MSVC (Visual Studio 2022)
+   Linux   : g++ (apt install g++)
+   macOS   : clang++ (Xcode Command Line Tools)
+
+
+Folder structure:
+------------------------------------------------------------------------
+
+vizr/
+├── vizr.cpp                  ← your source file
+├── compile_windows.bat
+├── compile_linux.sh
+├── compile_mac.sh
+│
+├── imgui/                    ← clone from github.com/ocornut/imgui
+│   ├── imgui.h
+│   ├── imgui.cpp
+│   ├── imgui_draw.cpp
+│   ├── imgui_tables.cpp
+│   ├── imgui_widgets.cpp
+│   └── imgui_demo.cpp        ← optional, can omit
+│
+├── imgui-sfml/               ← clone from github.com/SFML/imgui-sfml
+│   ├── imgui-SFML.h
+│   └── imgui-SFML.cpp
+│
+└── SFML/                     ← extracted from sfml-dev.org download
+├── include/
+│   └── SFML/
+└── lib/
+├── libsfml-graphics.a  (or .lib on Windows)
+├── libsfml-audio.a
+└── libsfml-window.a
+
+
+Windows compile:
+--------------------------------------------------------
+Option A: MinGW-w64 
+─────────────────────────────────────────
+Step 1 — Install MinGW-w64
+Download from: https://winlibs.com/#download-release (get the UCRT 64-bit release)
+Extract to C:\mingw64
+Add C:\mingw64\bin to your PATH environment variable.
+Test: open CMD and type:  g++ --version
+
+Step 2 — Download SFML 2.6 for MinGW
+Go to: https://www.sfml-dev.org/download/sfml/2.6.1/
+Download: "GCC MinGW - 64-bit"
+Extract the zip, copy the SFML folder into your vizr/ project folder.
+
+Step 3 — Clone ImGui and imgui-sfml
+Open CMD in your vizr/ folder:
+git clone https://github.com/ocornut/imgui.git imgui
+git clone https://github.com/SFML/imgui-sfml.git imgui-sfml
+
+Step 4 — Run the compile script
+Double-click  compile_windows.bat
+OR in CMD:  compile_windows.bat
+Output:  vizr.exe
+
+Step 5 — Run it
+Copy these DLLs next to vizr.exe (they're in SFML/bin/):
+sfml-graphics-2.dll
+sfml-audio-2.dll
+sfml-window-2.dll
+sfml-system-2.dll
+openal32.dll
+Then double-click vizr.exe
+
+Option B: Visual Studio 2022
+──────────────────────────────────────────
+Step 1 — Install Visual Studio 2022 Community
+https://visualstudio.microsoft.com/
+Make sure to check "Desktop development with C++" during install.
+
+Step 2 — Create a new project
+File → New → Project → "Empty Project (C++)"
+Name it vizr.
+
+Step 3 — Add source files
+Right-click "Source Files" → Add → Existing Item
+Add: vizr.cpp, imgui/*.cpp, imgui-sfml/imgui-SFML.cpp
+
+Step 4 — Configure project properties
+Right-click project → Properties:
+Under C/C++ → General → Additional Include Directories, add:
+$(ProjectDir)imgui
+$(ProjectDir)imgui-sfml
+$(ProjectDir)SFML/include
+Under Linker → General → Additional Library Directories, add:
+$(ProjectDir)SFML/lib
+Under Linker → Input → Additional Dependencies, add:
+sfml-graphics.lib
+sfml-audio.lib
+sfml-window.lib
+sfml-system.lib
+opengl32.lib
+winmm.lib
+
+Step 5 — Build
+Build → Build Solution (Ctrl+Shift+B)
+Your .exe will appear in x64/Release/ or x64/Debug/
+
+Step 6 — Add DLLs next to the exe (same as Option A Step 5)
+
+Linux compile:
+-----------------------------------------------------------
+Step 1 — Install dependencies
+sudo apt update
+sudo apt install g++ libsfml-dev git
+
+Step 2 — Clone ImGui and imgui-sfml
+git clone https://github.com/ocornut/imgui.git imgui
+git clone https://github.com/SFML/imgui-sfml.git imgui-sfml
+
+Step 3 — Compile
+chmod +x compile_linux.sh
+./compile_linux.sh
+
+Step 4 — Run
+./vizr
+Or with a file:
+./vizr mysong.wav
+
+Mac compile:
+------------------------------------------------------------------
+Step 1 — Install dependencies
+xcode-select --install
+brew install sfml
+
+Step 2 — Clone ImGui and imgui-sfml
+git clone https://github.com/ocornut/imgui.git imgui
+git clone https://github.com/SFML/imgui-sfml.git imgui-sfml
+
+Step 3 — Compile
+chmod +x compile_mac.sh
+./compile_mac.sh
+
+Step 4 — Run
+./vizr
+
+For standalone exe only:
+---------------------------------------------------------------------
+With MinGW, change the linker flags in compile_windows.bat to:
+-static -static-libgcc -static-libstdc++
+And link against the static SFML libs (.a files) instead of
+the import libs (.lib).
+Note: OpenAL (audio) is harder to statically link on Windows.
+You may need to ship openal32.dll regardless, or use a different
+audio backend.
+On Linux you can do:
+-static-libgcc -static-libstdc++
+But SFML still needs shared .so files unless you build SFML
+from source with -DBUILD_SHARED_LIBS=OFF.
+
+MP3 support:
+----------------------------------------------------------------------
+Install libmpg123:
+   Windows: download from https://mpg123.de
+   Linux:   sudo apt install libmpg123-dev
+   macOS:   brew install mpg123
+
+Then SFML 2.6+ will auto-detect and use it.
+
+Alternatively, convert MP3s to WAV first:
+ffmpeg -i song.mp3 song.wav
+
+Troubleshooting:
+-------------------------------------------------------------------------
+"cannot find -lsfml-graphics"
+→ Check your SFML/lib path in the compile script.
+→ Make sure you downloaded the right SFML version (MinGW 64-bit).
+
+"imgui.h: No such file or directory"
+→ The imgui/ folder isn't in the right place.
+→ Check the -I include paths in the compile script.
+
+"undefined reference to ImGui::SFML::Init"
+→ imgui-SFML.cpp isn't being compiled.
+→ Make sure it's listed in the compile command.
+
+App opens and immediately closes
+→ Run from a terminal to see error output.
+→ Check that all SFML DLLs are next to the .exe.
+
+No sound
+→ openal32.dll is missing next to the .exe.
+→ Check that your audio file format is supported.
+
+VIZR controls:
+---------------------------------------------------------------------------
+SPACE     — play / pause
+← →       — seek -5 / +5 seconds
+F / F11   — toggle fullscreen
+ESC       — quit
+Sidebar   — pick visualizer, pick theme
+Bottom bar — progress bar (click to seek), gain, smoothing sliders
+
+
+
+
+
