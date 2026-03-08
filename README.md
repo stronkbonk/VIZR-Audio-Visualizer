@@ -6,3 +6,4 @@ Just an average audio visualizer for Windows.
 Am working on compiling it for Linux and Mac.
 I will add more stuff visualizers to it soon.
 Fullscreen is broken, but I am fixing it.
+Only supports .flac, .ogg and .wav files.
